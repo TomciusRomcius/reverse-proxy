@@ -1,14 +1,12 @@
+import Application from "./application.ts";
 import Connection from "./connection.ts";
+import { LoadBalancerType } from "./loadBalancer.ts";
+import RoundRobin from "./roundRobin.ts";
 
 const connections = new Set<Connection>;
 
-async function main() {
-  const listener = Deno.listen({ port: 8000, transport: "tcp" });
-  while (true) {
-    const connection = await listener.accept();
-    console.log("New connection");
-    connections.add(new Connection(connection));
-  }
+function main() {
+  const app = new Application(LoadBalancerType.ROUND_ROBIN);
 }
 
 main();
