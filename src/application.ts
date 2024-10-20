@@ -2,7 +2,7 @@ import Connection from "./connection.ts";
 import { sourceToString, type ConnectionSourceType } from "./connectionTypes.ts";
 import { LoadBalancerType } from "./loadBalancer.ts";
 import type ILoadBalancer from "./loadBalancer.ts";
-import { infoLog } from "./logger.tsx";
+import { infoLog } from "./logger.ts";
 import RoundRobin from "./roundRobin.ts";
 
 export default class Application {
