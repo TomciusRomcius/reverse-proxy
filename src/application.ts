@@ -1,9 +1,14 @@
 import Connection from "./connection.ts";
-import { sourceToString, type ConnectionSourceType } from "./connectionTypes.ts";
+import {
+  sourceToString,
+  type ConnectionSourceType,
+} from "./connectionTypes.ts";
 import { LoadBalancerType } from "./loadBalancer.ts";
 import type ILoadBalancer from "./loadBalancer.ts";
+import { loadBalancerBuilder } from "./loadBalancerBuilder.ts";
 import { infoLog } from "./logger.ts";
 import RoundRobin from "./roundRobin.ts";
+import type Weighted from "./weighted.ts";
 
 export default class Application {
   private serverSources: ConnectionSourceType[] = [];
@@ -16,17 +21,14 @@ export default class Application {
   private async initialize(loadBalancerType: LoadBalancerType) {
     await this.getServerIps();
     const listener = Deno.listen({ port: 8000, transport: "tcp" });
-    switch (loadBalancerType) {
-      case LoadBalancerType.ROUND_ROBIN:
-        this.loadBalancer = new RoundRobin(this.serverSources);
-        break;
-    }
+    this.loadBalancer = loadBalancerBuilder(loadBalancerType, this.serverSources);
 
     infoLog("Listening for client connections..");
     while (1) {
       const con = await listener.accept();
       infoLog("New client connections..");
-      new Connection(con, this.loadBalancer.pickSource())
+      const source = this.loadBalancer.pickSource();
+      new Connection(con, source, () => this.onConnectionClose(source));
     }
   }
 
@@ -46,5 +48,14 @@ export default class Application {
       return sourceObj;
     });
     file.close();
+  }
+
+  private onConnectionClose(serverSource: ConnectionSourceType) {
+    if (!this.loadBalancer) {
+      throw new Error("Loadbalancer not defined");
+    }
+    if (this.loadBalancer.type === LoadBalancerType.WEIGHTED) {
+      (this.loadBalancer as Weighted).addConnection(serverSource);
+    }
   }
 }

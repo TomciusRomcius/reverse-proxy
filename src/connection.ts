@@ -1,4 +1,7 @@
-import { sourceToString, type ConnectionSourceType } from "./connectionTypes.ts";
+import {
+  sourceToString,
+  type ConnectionSourceType,
+} from "./connectionTypes.ts";
 import { infoLog } from "./logger.ts";
 
 const MAX_BUFFER_SIZE = 1024;
@@ -8,7 +11,6 @@ export default class Connection {
   serverConnection: Deno.TcpConn | null = null;
   serverSource: ConnectionSourceType;
   onClose: () => void;
-
   public constructor(
     clientConnection: Deno.TcpConn,
     serverSource: ConnectionSourceType,
