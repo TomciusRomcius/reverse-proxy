@@ -1,5 +1,5 @@
+import { sourceToString, type ConnectionSourceType } from "./connectionTypes.ts";
 import { infoLog } from "./logger.tsx";
-import { sourceToString, type ConnectionSourceType } from "./serverSource.ts";
 
 const MAX_BUFFER_SIZE = 1024;
 

@@ -1,6 +1,5 @@
+import type { ConnectionSourceType } from "./connectionTypes.ts";
 import type ILoadBalancer from "./loadBalancer.ts";
-import { errorLog, infoLog } from "./logger.tsx";
-import { sourceToString, type ConnectionSourceType } from "./serverSource.ts";
 
 export default class RoundRobin implements ILoadBalancer {
   private serverSources: ConnectionSourceType[] = [];

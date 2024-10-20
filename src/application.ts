@@ -1,19 +1,9 @@
 import Connection from "./connection.ts";
+import { sourceToString, type ConnectionSourceType } from "./connectionTypes.ts";
 import { LoadBalancerType } from "./loadBalancer.ts";
 import type ILoadBalancer from "./loadBalancer.ts";
-import { errorLog, infoLog } from "./logger.tsx";
+import { infoLog } from "./logger.tsx";
 import RoundRobin from "./roundRobin.ts";
-import { sourceToString } from "./serverSource.ts";
-
-type ProxyConnectionType = {
-  serverSource: ConnectionSourceType;
-  connections: number;
-}
-
-type ConnectionSourceType = {
-  hostname: string;
-  port: number;
-};
 
 export default class Application {
   private serverSources: ConnectionSourceType[] = [];
