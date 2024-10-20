@@ -5,5 +5,5 @@ export enum LoadBalancerType {
 }
 
 export default interface ILoadBalancer {
-  getNextSource: () => ServerSourceType;
+  pickSource: () => ServerSourceType;
 }

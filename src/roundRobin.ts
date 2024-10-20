@@ -12,40 +12,15 @@ export default class RoundRobin implements ILoadBalancer {
 
   public constructor(serverSources: ServerSourceType[]) {
     this.serverSources = serverSources;
-    this.serverSources.forEach((source) => {
-      this.establishConnection(source);
-    });
   }
 
-  private async establishConnection(source: ServerSourceType) {
-    const connection = await Deno.connect({
-      hostname: source.hostname,
-      port: source.port,
-      transport: "tcp",
-    });
-    this.connections.set(sourceToString(source), connection);
-  }
-
-  public forwardRequest(buffer: Uint8Array) {
-    const nextSource = this.getNextSource();
-    const connection = this.connections.get(sourceToString(nextSource));
-    if (!connection) {
-      errorLog("The connection is not open!");
-      return;
-    }
-
-    connection.write(buffer).then(() => {
-      infoLog(`Succesfully forwarded request to ${sourceToString(nextSource)}`);
-    });
-  }
-
-  private getNextSource() {
+  public pickSource() {
     this.lastSourceIndex++;
     if (this.serverSources.length === 0) {
       throw new Error("Server sources array is empty");
     }
 
-    if (this.lastSourceIndex > this.serverSources.length) {
+    if (this.lastSourceIndex >= this.serverSources.length) {
       this.lastSourceIndex = 0;
     }
     return this.serverSources[this.lastSourceIndex];

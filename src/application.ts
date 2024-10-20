@@ -21,7 +21,6 @@ export default class Application {
 
   private async initialize(loadBalancerType: LoadBalancerType) {
     await this.getServerIps();
-
     const listener = Deno.listen({ port: 8000, transport: "tcp" });
     switch (loadBalancerType) {
       case LoadBalancerType.ROUND_ROBIN:
@@ -29,12 +28,11 @@ export default class Application {
         break;
     }
 
+    infoLog("Listening for client connections..");
     while (1) {
       const con = await listener.accept();
-      this.clientConnections.add(
-        new Connection(con, this.serverSources, this.loadBalancer)
-      );
-      infoLog("New connection");
+      infoLog("New client connections..");
+      new Connection(con, this.loadBalancer.pickSource())
     }
   }
 
