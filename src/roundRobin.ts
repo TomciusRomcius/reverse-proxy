@@ -1,7 +1,9 @@
 import type { ConnectionSourceType } from "./connectionTypes.ts";
+import { LoadBalancerType } from "./loadBalancer.ts";
 import type ILoadBalancer from "./loadBalancer.ts";
 
 export default class RoundRobin implements ILoadBalancer {
+  public type = LoadBalancerType.ROUND_ROBIN;
   private serverSources: ConnectionSourceType[] = [];
   private connections: Map<string, Deno.TcpConn> = new Map<
     string,
