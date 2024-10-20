@@ -55,7 +55,7 @@ export default class Application {
       throw new Error("Loadbalancer not defined");
     }
     if (this.loadBalancer.type === LoadBalancerType.WEIGHTED) {
-      (this.loadBalancer as Weighted).addConnection(serverSource);
+      (this.loadBalancer as Weighted).removeConnection(serverSource);
     }
   }
 }

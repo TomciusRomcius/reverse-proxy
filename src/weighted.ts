@@ -17,18 +17,6 @@ export default class Weighted implements ILoadBalancer {
     });
   }
 
-  public addConnection(serverSource: ConnectionSourceType) {
-    this.serverSources.forEach((source) => {
-      if (
-        source.serverSource.hostname === serverSource.hostname &&
-        source.serverSource.port === serverSource.port
-      ) {
-        infoLog("Added a connection");
-        source.connections++;
-      }
-    });
-  }
-
   public removeConnection(serverSource: ConnectionSourceType) {
     this.serverSources.forEach((source) => {
       if (
@@ -43,13 +31,13 @@ export default class Weighted implements ILoadBalancer {
 
   public pickSource() {
     let minReference = this.serverSources[0];
-
     this.serverSources.forEach((source) => {
       if (source.connections < minReference.connections) {
         minReference = source;
       }
     });
 
+    minReference.connections++;
     return minReference.serverSource;
   }
 }
