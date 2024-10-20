@@ -1,11 +1,11 @@
 import { errorLog, infoLog } from "./logger.tsx";
-import { sourceToString, type ServerSourceType } from "./serverSource.ts";
+import { sourceToString, type ConnectionSourceType } from "./serverSource.ts";
 
 export default class ServerConnection {
-  source: ServerSourceType;
+  source: ConnectionSourceType;
   connection: Deno.TcpConn | null = null;
 
-  constructor(source: ServerSourceType) {
+  constructor(source: ConnectionSourceType) {
     this.source = source;
     this.handleConnection();
   }

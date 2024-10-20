@@ -5,15 +5,19 @@ import { errorLog, infoLog } from "./logger.tsx";
 import RoundRobin from "./roundRobin.ts";
 import { sourceToString } from "./serverSource.ts";
 
-type ServerSourceType = {
+type ProxyConnectionType = {
+  serverSource: ConnectionSourceType;
+  connections: number;
+}
+
+type ConnectionSourceType = {
   hostname: string;
   port: number;
 };
 
 export default class Application {
-  private serverSources: ServerSourceType[] = [];
+  private serverSources: ConnectionSourceType[] = [];
   private loadBalancer: ILoadBalancer | null = null;
-  private clientConnections: Set<Connection> = new Set<Connection>();
 
   public constructor(loadBalancerType: LoadBalancerType) {
     this.initialize(loadBalancerType);
@@ -47,9 +51,10 @@ export default class Application {
       const sourceObj = {
         hostname: items[0],
         port: Number(items[1] || 80),
-      } as ServerSourceType;
+      } as ConnectionSourceType;
       infoLog(`Loaded source: ${sourceToString(sourceObj)}`);
       return sourceObj;
     });
+    file.close();
   }
 }

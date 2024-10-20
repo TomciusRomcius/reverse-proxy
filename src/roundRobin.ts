@@ -1,16 +1,16 @@
 import type ILoadBalancer from "./loadBalancer.ts";
 import { errorLog, infoLog } from "./logger.tsx";
-import { sourceToString, type ServerSourceType } from "./serverSource.ts";
+import { sourceToString, type ConnectionSourceType } from "./serverSource.ts";
 
 export default class RoundRobin implements ILoadBalancer {
-  private serverSources: ServerSourceType[] = [];
+  private serverSources: ConnectionSourceType[] = [];
   private connections: Map<string, Deno.TcpConn> = new Map<
     string,
     Deno.TcpConn
   >();
   private lastSourceIndex = -1;
 
-  public constructor(serverSources: ServerSourceType[]) {
+  public constructor(serverSources: ConnectionSourceType[]) {
     this.serverSources = serverSources;
   }
 
