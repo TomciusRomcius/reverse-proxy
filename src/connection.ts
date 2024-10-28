@@ -13,12 +13,14 @@ export default class Connection {
   serverConnection: Deno.TcpConn | null = null;
   serverSource: ConnectionSourceType;
   onClose: () => void;
+  rateLimiter: RateLimiter;
 
   public constructor(
     clientConnection: Deno.TcpConn,
     serverSource: ConnectionSourceType,
     onClose: () => void
   ) {
+    this.rateLimiter = new RateLimiter(2, 0.2);
     this.clientConnection = clientConnection;
     this.serverSource = serverSource;
     this.onClose = onClose;
@@ -37,29 +39,17 @@ export default class Connection {
     }
     try {
       // Connect to target server
-      let timer = new Date();
-      let requests = 0;
       while (1) {
         const buffer = new Uint8Array(MAX_BUFFER_SIZE);
         const bufferSize = await this.clientConnection.read(buffer);
         infoLog("Incoming request");
 
         // Handle request throttling
-        if (new Date().getMilliseconds() - timer.getMilliseconds() < REQUEST_TIMER) {
-          requests++;
-          if (requests > MAX_REQUESTS) {
-            /* TODO: Ignore request by setting a timer and then 
-            handling the request after timer has expired
-            */
-            infoLog("Connection refused");
-            await new Promise((resolve) => setTimeout(() => resolve(null), REQUEST_TIMER));
-            infoLog("Reset timer");
-            continue;
-          }
-        } else {
-          // Reset the timer and requests count when the time frame has expired
-          timer = new Date();
-          requests = 0;
+        const throttle = this.rateLimiter.tryRequest();
+        if (!throttle) {
+          infoLog("Applying ratelimiting");
+          await this.rateLimiter.delayUntilNextRequest();
+          infoLog("Done ratelimiting");
         }
 
         // If the clientConnection is closed
