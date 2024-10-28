@@ -3,6 +3,7 @@ import {
   type ConnectionSourceType,
 } from "./connectionTypes.ts";
 import { infoLog } from "./logger.ts";
+import RateLimiter from "./rateLimiter.ts";
 
 const MAX_BUFFER_SIZE = 1024;
 const MAX_REQUESTS = 5;
