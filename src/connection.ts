@@ -5,12 +5,15 @@ import {
 import { infoLog } from "./logger.ts";
 
 const MAX_BUFFER_SIZE = 1024;
+const MAX_REQUESTS = 5;
+const REQUEST_TIMER = 1000;
 
 export default class Connection {
   clientConnection: Deno.TcpConn;
   serverConnection: Deno.TcpConn | null = null;
   serverSource: ConnectionSourceType;
   onClose: () => void;
+
   public constructor(
     clientConnection: Deno.TcpConn,
     serverSource: ConnectionSourceType,
@@ -34,16 +37,37 @@ export default class Connection {
     }
     try {
       // Connect to target server
-
+      let timer = new Date();
+      let requests = 0;
       while (1) {
         const buffer = new Uint8Array(MAX_BUFFER_SIZE);
         const bufferSize = await this.clientConnection.read(buffer);
+        infoLog("Incoming request");
+
+        // Handle request throttling
+        if (new Date().getMilliseconds() - timer.getMilliseconds() < REQUEST_TIMER) {
+          requests++;
+          if (requests > MAX_REQUESTS) {
+            /* TODO: Ignore request by setting a timer and then 
+            handling the request after timer has expired
+            */
+            infoLog("Connection refused");
+            await new Promise((resolve) => setTimeout(() => resolve(null), REQUEST_TIMER));
+            infoLog("Reset timer");
+            continue;
+          }
+        } else {
+          // Reset the timer and requests count when the time frame has expired
+          timer = new Date();
+          requests = 0;
+        }
 
         // If the clientConnection is closed
         if (bufferSize === null) {
           return;
         }
-        const data = new TextDecoder().decode(buffer.subarray(0, bufferSize));
+
+        // Forward the request to the server
         this.serverConnection.write(buffer.subarray(0, bufferSize));
       }
     } catch (err) {
@@ -85,3 +109,15 @@ export default class Connection {
     this.onClose();
   }
 }
+
+/*
+  avg = reqs / time
+  
+  
+  on request
+    if currentTime - timer < 1min
+      if reqCount > MAX
+        cap requests
+      else
+        requests++
+*/
