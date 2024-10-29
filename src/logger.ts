@@ -2,6 +2,10 @@ function getDate() {
   return new Date().toLocaleString();
 }
 
+export function debugLog(message: string) {
+  console.log(`DEBUG [${getDate()}]: ${message}`);
+}
+
 export function infoLog(message: string) {
   console.log(`INFO [${getDate()}]: ${message}`);
 }
