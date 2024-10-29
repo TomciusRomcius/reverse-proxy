@@ -2,12 +2,10 @@ import {
   sourceToString,
   type ConnectionSourceType,
 } from "./connectionTypes.ts";
-import { infoLog } from "./logger.ts";
+import { debugLog, errorLog, infoLog } from "./logger.ts";
 import RateLimiter from "./rateLimiter.ts";
 
 const MAX_BUFFER_SIZE = 1024;
-const MAX_REQUESTS = 5;
-const REQUEST_TIMER = 1000;
 
 export default class Connection {
   clientConnection: Deno.TcpConn;
@@ -26,7 +24,6 @@ export default class Connection {
     this.serverSource = serverSource;
     this.onClose = onClose;
 
-    // FIXME: May break things. The user may send data before the server connection is established
     this.initializeServerConnection().then((con) => {
       this.serverConnection = con;
       this.handleServerConnection(con);
@@ -43,14 +40,14 @@ export default class Connection {
       while (1) {
         const buffer = new Uint8Array(MAX_BUFFER_SIZE);
         const bufferSize = await this.clientConnection.read(buffer);
-        infoLog("Incoming request");
+        debugLog("Incoming request");
 
         // Handle request throttling
         const throttle = this.rateLimiter.tryRequest();
         if (!throttle) {
-          infoLog("Applying ratelimiting");
+          debugLog("Applying ratelimiting");
           await this.rateLimiter.delayUntilNextRequest();
-          infoLog("Done ratelimiting");
+          debugLog("Done ratelimiting");
         }
 
         // If the clientConnection is closed
@@ -62,9 +59,8 @@ export default class Connection {
         this.serverConnection.write(buffer.subarray(0, bufferSize));
       }
     } catch (err) {
-      console.error(err);
-      this.clientConnection.close();
-      this.onClose();
+      errorLog(`${err}`);
+      this.cleanup();
     }
   }
 
@@ -97,18 +93,14 @@ export default class Connection {
       await this.clientConnection.write(sentBuffer);
       infoLog("Succesfully forwarded data to the client");
     }
+    this.cleanup();
+  }
+
+  private cleanup() {
+    if (this.serverConnection) {
+      this.serverConnection.close();
+    }
+    this.clientConnection.close();
     this.onClose();
   }
 }
-
-/*
-  avg = reqs / time
-  
-  
-  on request
-    if currentTime - timer < 1min
-      if reqCount > MAX
-        cap requests
-      else
-        requests++
-*/
