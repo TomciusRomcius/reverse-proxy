@@ -26,6 +26,8 @@ export default class Connection {
 
     this.initializeServerConnection().then((con) => {
       this.serverConnection = con;
+      this.serverConnection.setKeepAlive(true);
+      this.clientConnection.setKeepAlive(true);
       this.handleServerConnection(con);
       this.handleConnection();
     });
