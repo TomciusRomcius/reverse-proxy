@@ -52,7 +52,8 @@ export default class Connection {
 
         // If the clientConnection is closed
         if (bufferSize === null) {
-          return;
+          debugLog("Connection is closed");
+          break;
         }
 
         // Forward the request to the server
