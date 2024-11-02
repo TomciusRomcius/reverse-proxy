@@ -1,8 +1,9 @@
 {
   "tasks": {
-    "dev": "deno run --watch --allow-net --allow-read ./src/main.ts"
+    "dev": "cd reverse-proxy && deno run dev",
+    "test": "deno run --allow-run tester.ts",
+    "test:server": "cd tester && deno task start",
+    "test:client": "cd tester-client && deno task start"
   },
-  "imports": {
-    "@std/assert": "jsr:@std/assert@1"
-  }
+  "workspace": ["./reverse-proxy", "./tester", "./tester-client"]
 }
