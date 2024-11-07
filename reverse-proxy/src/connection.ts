@@ -24,13 +24,19 @@ export default class Connection {
     this.serverSource = serverSource;
     this.onClose = onClose;
 
-    this.initializeServerConnection().then((con) => {
-      this.serverConnection = con;
-      this.serverConnection.setKeepAlive(true);
-      this.clientConnection.setKeepAlive(true);
-      this.handleServerConnection(con);
-      this.handleConnection();
-    });
+    this.initialize();
+  }
+
+  private async initialize() {
+    const connection = await this.initializeServerConnection();
+    if (!connection) {
+      return;
+    }
+    this.serverConnection = connection;
+    this.serverConnection.setKeepAlive(true);
+    this.clientConnection.setKeepAlive(true);
+    this.handleServerConnection(this.serverConnection);
+    this.handleConnection();
   }
 
   private async handleConnection() {
@@ -73,13 +79,19 @@ export default class Connection {
         this.serverSource
       )}`
     );
-    const serverConnection = await Deno.connect({
-      hostname: this.serverSource.hostname,
-      port: this.serverSource.port,
-      transport: "tcp",
-    });
-    infoLog("Succesfully established connection with a server");
-    return serverConnection;
+    try {
+      const serverConnection = await Deno.connect({
+        hostname: this.serverSource.hostname,
+        port: this.serverSource.port,
+        transport: "tcp",
+      });
+      infoLog("Succesfully established connection with a server");
+      return serverConnection;
+    } catch (err) {
+      errorLog("Failed to establish connection with the server");
+      debugLog(`${err}`);
+      return null;
+    }
   }
 
   private async handleServerConnection(serverConnection: Deno.TcpConn) {
@@ -109,9 +121,7 @@ export default class Connection {
     try {
       this.serverConnection?.close();
       this.clientConnection.close();
-    }
-
-    catch {}
+    } catch {}
 
     this.onClose();
   }
