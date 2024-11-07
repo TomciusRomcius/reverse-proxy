@@ -85,25 +85,34 @@ export default class Connection {
   private async handleServerConnection(serverConnection: Deno.TcpConn) {
     while (1) {
       const buffer = new Uint8Array(MAX_BUFFER_SIZE);
-      const bufferSize = await serverConnection.read(buffer);
-      // Check if stream closed
-      if (!bufferSize) {
-        infoLog("Connection closed");
+
+      try {
+        const bufferSize = await serverConnection.read(buffer);
+        // Check if stream closed
+        if (!bufferSize) {
+          debugLog("Connection closed");
+          break;
+        }
+        const sentBuffer = buffer.subarray(0, bufferSize);
+        debugLog("Forwarding data to the client");
+        await this.clientConnection.write(sentBuffer);
+        debugLog("Succesfully forwarded data to the client");
+      } catch {
+        debugLog("Closed connection");
         break;
       }
-      const sentBuffer = buffer.subarray(0, bufferSize);
-      infoLog("Forwarding data to the client");
-      await this.clientConnection.write(sentBuffer);
-      infoLog("Succesfully forwarded data to the client");
     }
     this.cleanup();
   }
 
   private cleanup() {
-    if (this.serverConnection) {
-      this.serverConnection.close();
+    try {
+      this.serverConnection?.close();
+      this.clientConnection.close();
     }
-    this.clientConnection.close();
+
+    catch {}
+
     this.onClose();
   }
 }
