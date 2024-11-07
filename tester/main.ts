@@ -8,19 +8,18 @@ async function handleConnection(connection: Deno.TcpConn) {
       // Connection closed;
     } else {
       const text = new TextDecoder().decode(buffer.subarray(0, bufSize));
-      const responseText = `Received data: ${text}`;
-      console.log(`Sending: "${responseText}"`);
-      const responseBytes = new TextEncoder().encode(responseText);
+      console.log(`Server: ${text}`);
+      const responseBytes = new TextEncoder().encode(text);
       connection.write(responseBytes);
     }
   }
 }
 
-async function setupServer(port: number) {
+async function setupServer(port: number, serverId: number) {
   const listener = Deno.listen({ port: port });
   while (1) {
     const con = await listener.accept();
-    console.log("New connection");
+    console.log(`New connection on server: ${serverId}`);
     con.setKeepAlive(true);
     handleConnection(con);
   }
@@ -28,10 +27,10 @@ async function setupServer(port: number) {
 
 async function main() {
   await Promise.all([
-    setupServer(3000),
-    setupServer(3001),
-    setupServer(3002),
-    setupServer(3003),
+    setupServer(3000, 0),
+    setupServer(3001, 1),
+    setupServer(3002, 2),
+    setupServer(3003, 3),
   ]);
 }
 
