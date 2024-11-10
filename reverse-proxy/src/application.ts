@@ -3,6 +3,7 @@ import {
   sourceToString,
   type ConnectionSourceType,
 } from "./connectionTypes.ts";
+import { fileLogger } from "./fileLogger.ts";
 import { LoadBalancerType } from "./loadBalancer.ts";
 import type ILoadBalancer from "./loadBalancer.ts";
 import { loadBalancerBuilder } from "./loadBalancerBuilder.ts";
@@ -18,10 +19,13 @@ export default class Application {
   }
 
   private async initialize(loadBalancerType: LoadBalancerType) {
+    await fileLogger.openFile();
     await this.getServerIps();
     const listener = Deno.listen({ port: 8000, transport: "tcp" });
-    this.loadBalancer = loadBalancerBuilder(loadBalancerType, this.serverSources);
-
+    this.loadBalancer = loadBalancerBuilder(
+      loadBalancerType,
+      this.serverSources
+    );
     infoLog("Listening for client connections..");
     while (1) {
       const con = await listener.accept();
