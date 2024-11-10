@@ -67,8 +67,7 @@ export default class Connection {
         // Forward the request to the server
         this.serverConnection.write(buffer.subarray(0, bufferSize));
       }
-    } catch (err) {
-      errorLog(`${err}`);
+    } catch {
       this.cleanup();
     }
   }
@@ -87,9 +86,8 @@ export default class Connection {
       });
       infoLog("Succesfully established connection with a server");
       return serverConnection;
-    } catch (err) {
+    } catch {
       errorLog("Failed to establish connection with the server");
-      debugLog(`${err}`);
       return null;
     }
   }
@@ -121,8 +119,8 @@ export default class Connection {
     try {
       this.serverConnection?.close();
       this.clientConnection.close();
-    } catch {}
-
-    this.onClose();
+    } catch {
+      this.onClose();
+    }
   }
 }
