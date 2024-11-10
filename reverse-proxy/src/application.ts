@@ -7,7 +7,7 @@ import { fileLogger } from "./fileLogger.ts";
 import { LoadBalancerType } from "./loadBalancer.ts";
 import type ILoadBalancer from "./loadBalancer.ts";
 import { loadBalancerBuilder } from "./loadBalancerBuilder.ts";
-import { debugLog, infoLog } from "./logger.ts";
+import { debugLog, errorLog, infoLog } from "./logger.ts";
 import type Weighted from "./weighted.ts";
 
 export default class Application {
@@ -31,7 +31,7 @@ export default class Application {
       const con = await listener.accept();
       debugLog("New client connection..");
       const source = this.loadBalancer.pickSource();
-      new Connection(con, source, () => this.onConnectionClose(source));
+      Connection.create(con, source, () => this.onConnectionClose(source));
     }
   }
 

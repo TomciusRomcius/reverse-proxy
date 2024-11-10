@@ -14,6 +14,23 @@ export default class Connection {
   onClose: () => void;
   rateLimiter: RateLimiter;
 
+  public static async create(
+    clientConnection: Deno.TcpConn,
+    serverSource: ConnectionSourceType,
+    onClose: () => void
+  ) {
+    try {
+      const connection = new Connection(clientConnection, serverSource, onClose);
+      await connection.initialize();
+      return connection;
+    }
+
+    catch (err) {
+      errorLog(`${err}`);
+      return null;
+    }
+  }
+
   public constructor(
     clientConnection: Deno.TcpConn,
     serverSource: ConnectionSourceType,
@@ -23,14 +40,12 @@ export default class Connection {
     this.clientConnection = clientConnection;
     this.serverSource = serverSource;
     this.onClose = onClose;
-
-    this.initialize();
   }
 
-  private async initialize() {
+  public async initialize() {
     const connection = await this.initializeServerConnection();
     if (!connection) {
-      return;
+      throw new Error("Failed to initialize server connection");
     }
     this.serverConnection = connection;
     this.serverConnection.setKeepAlive(true);
@@ -95,7 +110,6 @@ export default class Connection {
   private async handleServerConnection(serverConnection: Deno.TcpConn) {
     while (1) {
       const buffer = new Uint8Array(MAX_BUFFER_SIZE);
-
       try {
         const bufferSize = await serverConnection.read(buffer);
         // Check if stream closed
