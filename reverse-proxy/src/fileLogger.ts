@@ -28,7 +28,6 @@ class FileLogger {
       this.isProcessing = false;
       return;
     }
-    console.log(this.messageQueue.length);
     while (this.messageQueue.length > 0) {
       const message = this.messageQueue[0];
       await this.file?.write(encodeText(`${message} \n`));
