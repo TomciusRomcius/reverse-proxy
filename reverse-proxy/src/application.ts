@@ -10,6 +10,36 @@ import { loadBalancerBuilder } from "./loadBalancerBuilder.ts";
 import { debugLog, errorLog, infoLog } from "./logger.ts";
 import type Weighted from "./weighted.ts";
 
+async function getServerSources() {
+  const content = await Deno.readTextFile("./server-ips.txt");
+
+  const serverSources = content.split("\n")
+  .filter((line) => line.length > 0)
+  .map((source) => {
+    
+    const items = source.split(":");
+    const hostname = items[0];
+    const port = parseInt(items[1]) || 80;
+
+    if (hostname.length === 0) {
+      throw new Error("Failed to get server hostname");
+    }
+
+    if (isNaN(port)) {
+      throw new Error("Failed to get server port");
+    }
+
+    const sourceObj = {
+      hostname: items[0],
+      port: Number(items[1] || 80),
+    } as ConnectionSourceType;
+    infoLog(`Loaded source: ${sourceToString(sourceObj)}`);
+    return sourceObj;
+  });
+  
+  return serverSources;
+}
+
 export default class Application {
   private serverSources: ConnectionSourceType[] = [];
   private loadBalancer: ILoadBalancer | null = null;
@@ -20,7 +50,17 @@ export default class Application {
 
   private async initialize(loadBalancerType: LoadBalancerType) {
     await fileLogger.openFile();
-    await this.getServerIps();
+    try {
+      this.serverSources = await getServerSources();
+    }
+
+    catch(err) {
+      if (err instanceof Error) {
+        errorLog(err.message)
+      }
+
+      return;
+    }
     const listener = Deno.listen({ port: 8000, transport: "tcp" });
     this.loadBalancer = loadBalancerBuilder(
       loadBalancerType,
@@ -33,24 +73,6 @@ export default class Application {
       const source = this.loadBalancer.pickSource();
       Connection.create(con, source, () => this.onConnectionClose(source));
     }
-  }
-
-  private async getServerIps() {
-    const file = await Deno.open("./server-ips.txt");
-    const buffer = new Uint8Array(1024);
-    const bufferSize = (await file.read(buffer)) || 0;
-    const content = new TextDecoder().decode(buffer.subarray(0, bufferSize));
-
-    this.serverSources = content.split("\n").map((source) => {
-      const items = source.split(":");
-      const sourceObj = {
-        hostname: items[0],
-        port: Number(items[1] || 80),
-      } as ConnectionSourceType;
-      infoLog(`Loaded source: ${sourceToString(sourceObj)}`);
-      return sourceObj;
-    });
-    file.close();
   }
 
   private onConnectionClose(serverSource: ConnectionSourceType) {
